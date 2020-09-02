@@ -133,7 +133,7 @@ public class Utility {
         try {
             JSONObject jsonObject = new JSONObject(response);
             String weatherContent = jsonObject.toString();
-            Log.d(TAG, "handleWeatherResponse: " + weatherContent);
+            // Log.d(TAG, "handleWeatherResponse: " + weatherContent);
             //返回解析后的 Weather 实体对象
             return new Gson().fromJson(weatherContent, Weather.class);
         } catch (Exception e) {

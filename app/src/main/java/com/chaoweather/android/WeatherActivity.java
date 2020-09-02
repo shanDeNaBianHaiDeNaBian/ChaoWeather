@@ -1,14 +1,19 @@
 package com.chaoweather.android;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.Manifest;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.preference.PreferenceManager;
@@ -24,6 +29,10 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.baidu.location.BDAbstractLocationListener;
+import com.baidu.location.BDLocation;
+import com.baidu.location.LocationClient;
+import com.baidu.location.LocationClientOption;
 import com.bumptech.glide.Glide;
 import com.chaoweather.android.gson.Forecast;
 import com.chaoweather.android.gson.Weather;
@@ -37,6 +46,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -82,6 +93,10 @@ public class WeatherActivity extends AppCompatActivity {
     //生活建议 - 运动建议
     private TextView sportText;
 
+
+    public LocationClient mLocationClient = null;
+    private MyLocationListener myListener = new MyLocationListener();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -93,7 +108,41 @@ public class WeatherActivity extends AppCompatActivity {
             //设置状态栏背景颜色为透明
             getWindow().setStatusBarColor(Color.TRANSPARENT);
         }
+
+        //BDAbstractLocationListener为7.2版本新增的Abstract类型的监听接口
+        //原有BDLocationListener接口暂时同步保留。具体介绍请参考后文中的说明
+        //声明LocationClient类
+        mLocationClient = new LocationClient(getApplicationContext());
+        //注册监听函数
+        mLocationClient.registerLocationListener(myListener);
+
         setContentView(R.layout.activity_weather);
+
+
+        //多权限动态申请。
+        List<String> permissionList = new ArrayList<>();
+
+        //ACCESS_FINE_LOCATION 精准定位。（收集没有申请通过的权限)
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            permissionList.add(Manifest.permission.ACCESS_FINE_LOCATION);
+        }
+        // if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) !=
+        // PackageManager.PERMISSION_GRANTED) {
+        //     permissionList.add(Manifest.permission.READ_PHONE_STATE);
+        // }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            permissionList.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        }
+        //如果集合不等于空
+        if (!permissionList.isEmpty()) {
+            //把集合转换成字符串数组
+            String[] permissions = permissionList.toArray(new String[permissionList.size()]);
+            //申请权限（第2个参数相当于 new String[]{Manifest.permission.ACCESS_FINE_LOCATION,Manifest
+            // .permission.READ_PHONE_STATE,Manifest.permission.WRITE_EXTERNAL_STORAGE}
+            ActivityCompat.requestPermissions(this, permissions, 1);
+        } else {
+            requestLocation();
+        }
 
         //获取 ManiActivity 首页打开时传递过来的标题
         titleText = getIntent().getStringExtra("title");
@@ -163,6 +212,77 @@ public class WeatherActivity extends AppCompatActivity {
         });
     }
 
+    //请求定位
+    private void requestLocation() {
+        //先初始化
+        initLocation();
+        //开始
+        mLocationClient.start();
+    }
+
+    //初始化定位
+    private void initLocation() {
+        //获取定位连接配置实例
+        LocationClientOption option = new LocationClientOption();
+        //可选，是否需要地址信息，默认为不需要，即参数为false
+        //如果开发者需要获得当前点的地址信息，此处必须为true
+        option.setIsNeedAddress(true);
+        //可选，设置是否需要最新版本的地址信息。默认需要，即参数为true
+        option.setNeedNewVersionRgc(true);
+        //设置扫描间隔，单位是毫秒 当<1000(1s)时，定时定位无效
+        // option.setScanSpan(5000);
+        mLocationClient.setLocOption(option);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode) {
+            case 1:
+                if (grantResults.length > 0) {
+                    for (int result : grantResults) {
+                        if (result != PackageManager.PERMISSION_GRANTED) {
+                            Toast.makeText(this, "请务必同意权限才能使用本功能",
+                                    Toast.LENGTH_LONG).show();
+                            finish();
+                            return;
+                        }
+                    }
+                    requestLocation();
+                } else {
+                    Toast.makeText(this, "发生未知错误！", Toast.LENGTH_LONG).show();
+                    finish();
+                }
+                break;
+        }
+    }
+
+    public class MyLocationListener extends BDAbstractLocationListener{
+        @Override
+        public void onReceiveLocation(BDLocation location){
+            //此处的BDLocation为定位结果信息类，通过它的各种get方法可获取定位相关的全部结果
+            //以下只列举部分获取位置描述信息相关的结果
+            //更多结果信息获取说明，请参照类参考中BDLocation类中的说明
+            String addr = location.getAddrStr();    //获取详细地址信息
+            String country = location.getCountry();    //获取国家
+            String province = location.getProvince();    //获取省份
+            String city = location.getCity();    //获取城市
+            String district = location.getDistrict();    //获取区县
+            String street = location.getStreet();    //获取街道信息
+            String adcode = location.getAdCode();    //获取adcode
+            String town = location.getTown();    //获取乡镇信息
+
+            Log.d(TAG, "onReceiveLocation: addr is: " + addr);
+            Log.d(TAG, "onReceiveLocation: country is: " + country);
+            Log.d(TAG, "onReceiveLocation: province is: " + province);
+            Log.d(TAG, "onReceiveLocation: city is: " + city);
+            Log.d(TAG, "onReceiveLocation: district is: " + district);
+            Log.d(TAG, "onReceiveLocation: street is: " + street);
+            Log.d(TAG, "onReceiveLocation: adcode is: " + adcode);
+            Log.d(TAG, "onReceiveLocation: town is: " + town);
+        }
+    }
 
     private int requestCounts = 0;
     private String basicResponseText = "{}";
@@ -184,7 +304,7 @@ public class WeatherActivity extends AppCompatActivity {
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 //防止篡改所以弄个 final ？。获取请求结果。
                 final String responseText = response.body().string();
-                Log.d(TAG, "requestWeather onResponse: basic responseText is " + responseText);
+                // Log.d(TAG, "requestWeather onResponse: basic responseText is " + responseText);
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -230,7 +350,7 @@ public class WeatherActivity extends AppCompatActivity {
                     IOException {
                 //防止篡改所以弄个 final ？。获取请求结果。
                 final String responseText = response.body().string();
-                Log.d(TAG, "requestWeather onResponse: AQI responseText is " + responseText);
+                // Log.d(TAG, "requestWeather onResponse: AQI responseText is " + responseText);
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -278,8 +398,8 @@ public class WeatherActivity extends AppCompatActivity {
                     IOException {
                 //防止篡改所以弄个 final ？。获取请求结果。
                 final String responseText = response.body().string();
-                Log.d(TAG,
-                        "requestWeather onResponse: indices responseText is " + responseText);
+                // Log.d(TAG,
+                //         "requestWeather onResponse: indices responseText is " + responseText);
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -329,8 +449,8 @@ public class WeatherActivity extends AppCompatActivity {
                     IOException {
                 //防止篡改所以弄个 final ？。获取请求结果。
                 final String responseText = response.body().string();
-                Log.d(TAG,
-                        "requestWeather onResponse: indices responseText is " + responseText);
+                // Log.d(TAG,
+                //         "requestWeather onResponse: indices responseText is " + responseText);
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -402,7 +522,6 @@ public class WeatherActivity extends AppCompatActivity {
      * 处理并展示实体类 Weather 中的数据
      */
     private void showWeatherInfo() {
-        Log.d(TAG, "showWeatherInfo: ??");
         //设置标题城市名称
         titleCity.setText(titleText);
 
@@ -415,8 +534,8 @@ public class WeatherActivity extends AppCompatActivity {
 
         if (weather != null && "200".equals(weather.code)) {
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-            Log.d(TAG,
-                    "showWeatherInfo: weather.basic.getCode() is " + weather.basic.getCode());
+            // Log.d(TAG,
+            //         "showWeatherInfo: weather.basic.getCode() is " + weather.basic.getCode());
             if (!weather.basic.getCode().equals("000")) {
                 //2013-12-30 T 01:45 + 08:00
                 String updateTime = weather.basic.getUpdateTime().split("\\+")[1];
