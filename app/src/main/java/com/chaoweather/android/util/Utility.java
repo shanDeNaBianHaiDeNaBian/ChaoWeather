@@ -23,35 +23,15 @@ public class Utility {
     /**
      * 解析和处理服务器返回的省数据（解析后保存到数据库）
      *
-     * @param response 服务器返回的省数据。格式：[{"id":1,"name":"北京"},{"id":2,"name":"上海"},{"id":3,
-     *                 *                   "name":"天津"},{"id":4,"name":"重庆"},{"id":5,"name":"香港"}
-     *                 ,{"id":6,
-     *                 *                   "name":"澳门"},{"id":7,"name":"台湾"},{"id":8,"name":"黑龙江"
-     *                 },{"id":9,
-     *                 *                   "name":"吉林"},{"id":10,"name":"辽宁"},{"id":11,
-     *                 "name":"内蒙古"},{"id":12,
-     *                 *                   "name":"河北"},{"id":13,"name":"河南"},{"id":14,
-     *                 "name":"山西"},{"id":15,
-     *                 *                   "name":"山东"},{"id":16,"name":"江苏"},{"id":17,
-     *                 "name":"浙江"},{"id":18,
-     *                 *                   "name":"福建"},{"id":19,"name":"江西"},{"id":20,
-     *                 "name":"安徽"},{"id":21,
-     *                 *                   "name":"湖北"},{"id":22,"name":"湖南"},{"id":23,
-     *                 "name":"广东"},{"id":24,
-     *                 *                   "name":"广西"},{"id":25,"name":"海南"},{"id":26,
-     *                 "name":"贵州"},{"id":27,
-     *                 *                   "name":"云南"},{"id":28,"name":"四川"},{"id":29,
-     *                 "name":"西藏"},{"id":30,
-     *                 *                   "name":"陕西"},{"id":31,"name":"宁夏"},{"id":32,
-     *                 "name":"甘肃"},{"id":33,
-     *                 *                   "name":"青海"},{"id":34,"name":"新疆"}]
+     * @param response 服务器返回的省数据。格式：[[101090513,lunan,路南,CN,China,中国,hebei,河北省,
+     *                 tangshan,唐山市,39.61516,118.21082,130202],....]
      * @return
      */
     public static boolean handleProvinceResponse(List<String[]> response) {
         // Log.d(TAG, "handleProvinceResponse: response: " + response);
         if (response.size() > 0) {
             for (int i = 0; i < response.size(); i++) {
-                Log.d(TAG, "handleProvinceResponse: 省：" + response.get(i)[7]);
+                // Log.d(TAG, "handleProvinceResponse: 省：" + response.get(i)[7]);
                 Province province = new Province();
                 province.setLocationName(response.get(i)[7]);
                 province.setAdm1En(response.get(i)[6]);
@@ -68,17 +48,14 @@ public class Utility {
     /**
      * 解析和处理服务器返回的市数据
      *
-     * @param response 服务器返回的市数据。格式：[{"id":113,"name":"南京"},{"id":114,"name":"无锡"},{"id":115,
-     *                 "name":"镇江"},{"id":116,"name":"苏州"},{"id":117,"name":"南通"},{"id":118,
-     *                 "name":"扬州"},{"id":119,"name":"盐城"},{"id":120,"name":"徐州"},{"id":121,
-     *                 "name":"淮安"},{"id":122,"name":"连云港"},{"id":123,"name":"常州"},{"id":124,
-     *                 "name":"泰州"},{"id":125,"name":"宿迁"}]
+     * @param response 服务器返回的市数据。格式：[[101090513,lunan,路南,CN,China,中国,hebei,河北省,
+     *                 tangshan,唐山市,39.61516,118.21082,130202],....]
      * @return
      */
     public static boolean handleCityResponse(List<String[]> response) {
         if (response.size() > 0) {
             for (int i = 0; i < response.size(); i++) {
-                Log.d(TAG, "handleCityResponse: 市：" + response.get(i)[2]);
+                // Log.d(TAG, "handleCityResponse: 市：" + response.get(i)[2]);
                 City city = new City();
                 city.setLocationId(response.get(i)[0]);
                 city.setLocationNameEn(response.get(i)[1]);
@@ -101,17 +78,14 @@ public class Utility {
     /**
      * 解析和处理服务器返回的县数据
      *
-     * @param response 服务器返回的县数据。格式：[{"id":932,"name":"镇江","weather_id":"CN101190301"},{"id
-     *                 ":933,"name":"丹阳","weather_id":"CN101190302"},{"id":934,"name":"扬中",
-     *                 "weather_id":"CN101190303"},{"id":935,"name":"句容",
-     *                 "weather_id":"CN101190304"},{"id":936,"name":"丹徒",
-     *                 "weather_id":"CN101190305"}]
+     * @param response 服务器返回的县数据。格式：[[101090513,lunan,路南,CN,China,中国,hebei,河北省,
+     *                 tangshan,唐山市,39.61516,118.21082,130202],....]
      * @return
      */
     public static boolean handleCountyResponse(List<String[]> response) {
         if (response.size() > 0) {
             for (int i = 0; i < response.size(); i++) {
-                Log.d(TAG, "handleCityResponse: 县/区：" + response.get(i)[2]);
+                // Log.d(TAG, "handleCityResponse: 县/区：" + response.get(i)[2]);
                 County county = new County();
                 county.setLocationId(response.get(i)[0]);
                 county.setLocationNameEn(response.get(i)[1]);

@@ -2,6 +2,7 @@ package com.chaoweather.android;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.os.Bundle;
 import android.util.Log;
@@ -18,6 +19,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.preference.PreferenceManager;
 
 import com.chaoweather.android.db.City;
 import com.chaoweather.android.db.County;
@@ -132,19 +134,28 @@ public class ChooseAreaFragment extends Fragment {
                     queryCounties();
                 } else if (currentLevel == LEVEL_COUNTY) {
                     County county = countyList.get(position);
-                    String weatherId = county.getLocationId();
+                    String locationId = county.getLocationId();
                     String title = county.getLocationName();
                     if (getActivity() instanceof MainActivity) {
                         Intent intent = new Intent(getActivity(), WeatherActivity.class);
-                        intent.putExtra("weather_id", weatherId);
+                        intent.putExtra("weather_id", locationId);
                         intent.putExtra("title", title);
                         startActivity(intent);
+
+                        //如果是 MainActivity 首页打开，设置一下选择过县/区缓存，目的是下次在首页时直接进入天气页面
+                        SharedPreferences.Editor editor =
+                                PreferenceManager.getDefaultSharedPreferences(getContext()).edit();
+                        editor.putString("county",
+                                "{\"selected\":true,\"location_id\":\"" + locationId + "\"," +
+                                        "\"title_text\":\"" + title + "\"}");
+                        editor.apply();
+
                         getActivity().finish();
                     } else if (getActivity() instanceof WeatherActivity) {
                         WeatherActivity weatherActivity = (WeatherActivity) getActivity();
                         weatherActivity.drawerLayout.closeDrawers();
                         weatherActivity.swipeRefresh.setRefreshing(true);
-                        weatherActivity.requestWeather(weatherId);
+                        weatherActivity.requestWeather(locationId);
                         weatherActivity.titleText = title;
                     }
                 }

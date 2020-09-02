@@ -95,6 +95,7 @@ public class WeatherActivity extends AppCompatActivity {
         }
         setContentView(R.layout.activity_weather);
 
+        //获取 ManiActivity 首页打开时传递过来的标题
         titleText = getIntent().getStringExtra("title");
 
         //14.5.4
@@ -118,39 +119,32 @@ public class WeatherActivity extends AppCompatActivity {
         carWashText = findViewById(R.id.car_wash_text);
         sportText = findViewById(R.id.sport_text);
 
+        //14.6
+        final String locationId;
+
         //获取 weather 缓存数据
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        String weatherString = prefs.getString("weather", null);
-
-        //14.6
-        final String weatherId;
-        //14.6 无缓存，表示从县级列表选择进来的，所以要获取传过来的 weather_id
-        weatherId = getIntent().getStringExtra("weather_id");
-
-        requestWeather(weatherId);
-        //如果存在
-        // if (weatherString != null) {
-        //     Log.d(TAG, "onCreate: ??");
-        //     //有缓存时直接解析天气数据
-        //     Weather weather = Utility.handleWeatherResponse(weatherString);
-        //     //14.6
-        //     // weatherId = weather.basic.weatherId;
-        //     //显示天气信息
-        //     // showWeatherInfo(weather);
-        // } else {
-        //     //无缓存时从服务器获取天气数据
-        //     //父布局先设置成隐形不可见的，防止显示突兀？
-        //     weatherLayout.setVisibility(View.INVISIBLE);
-        //     //从服务器请求天气数据
-        //     requestWeather(weatherId);
-        // }
-        //14.6 当执行下拉刷新动作的时候执行请求天气接口
-        swipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                requestWeather(weatherId);
+        String prefs_county = prefs.getString("county",
+                "{\"selected\":false,\"location_id\":\"101090513\"," +
+                        "\"title_text\":\"路南\"}");
+        try {
+            JSONObject county = new JSONObject(prefs_county);
+            if (county.getBoolean("selected")) {
+                locationId = county.getString("location_id");
+                titleText = county.getString("title_text");
+            } else {
+                locationId = getIntent().getStringExtra("location_id");
             }
-        });
+            requestWeather(locationId);
+            swipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+                @Override
+                public void onRefresh() {
+                    requestWeather(locationId);
+                }
+            });
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 
         //14.5.4
         String bingPic = prefs.getString("bing_pic", null);
@@ -179,10 +173,10 @@ public class WeatherActivity extends AppCompatActivity {
     /**
      * 根据天气 id 请求城市天气信息
      */
-    public void requestWeather(final String weatherId) {
+    public void requestWeather(final String locationId) {
         //攒出对应请求地址
         String weatherUrl =
-                "https://devapi.heweather.net/v7/weather/now?location=" + weatherId + "&key" +
+                "https://devapi.heweather.net/v7/weather/now?location=" + locationId + "&key" +
                         "=c1d9dc6ffb8545f2884e7d36752ce8b7";
         //发送请求
         HttpUtil.sendOkHttpRequest(weatherUrl, new Callback() {
@@ -227,7 +221,7 @@ public class WeatherActivity extends AppCompatActivity {
 
         //攒出对应请求地址
         String AQIUrl =
-                "https://devapi.heweather.net/v7/air/now?location=" + weatherId + "&key" +
+                "https://devapi.heweather.net/v7/air/now?location=" + locationId + "&key" +
                         "=c1d9dc6ffb8545f2884e7d36752ce8b7";
         //发送请求
         HttpUtil.sendOkHttpRequest(AQIUrl, new Callback() {
@@ -275,7 +269,7 @@ public class WeatherActivity extends AppCompatActivity {
 
         //攒出对应请求地址
         String indicesUrl =
-                "https://devapi.heweather.net/v7/indices/1d?location=" + weatherId + "&key" +
+                "https://devapi.heweather.net/v7/indices/1d?location=" + locationId + "&key" +
                         "=c1d9dc6ffb8545f2884e7d36752ce8b7&type=8,1,2";
         //发送请求
         HttpUtil.sendOkHttpRequest(indicesUrl, new Callback() {
@@ -325,7 +319,7 @@ public class WeatherActivity extends AppCompatActivity {
 
         //攒出对应请求地址
         String dayForecast7Url =
-                "https://devapi.heweather.net/v7/weather/7d?location=" + weatherId +
+                "https://devapi.heweather.net/v7/weather/7d?location=" + locationId +
                         "&key" +
                         "=c1d9dc6ffb8545f2884e7d36752ce8b7";
         //发送请求

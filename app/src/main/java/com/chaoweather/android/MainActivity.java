@@ -17,6 +17,8 @@ import com.chaoweather.android.db.Province;
 import com.chaoweather.android.util.HttpUtil;
 
 import org.jetbrains.annotations.NotNull;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.litepal.LitePal;
 
 import java.io.BufferedReader;
@@ -48,25 +50,26 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        LitePal.deleteAll(Province.class, "");
-        LitePal.deleteAll(City.class, "");
-        LitePal.deleteAll(County.class, "");
-        List<Province> provinces = LitePal.findAll(Province.class);
-        // List<City> cities = LitePal.findAll(City.class);
-        // List<County> counties = LitePal.findAll(County.class);
+        // LitePal.deleteAll(Province.class, "");
+        // LitePal.deleteAll(City.class, "");
+        // LitePal.deleteAll(County.class, "");
+        // List<Province> provinces = LitePal.findAll(Province.class);
 
-
-        // Intent intent = new Intent(this, WeatherActivity.class);
-        // startActivity(intent);
-        // finish();
 
         //获取缓存中的天气数据，如果有直接打开天气详情界面，就不重新选择地区了
-        // SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        // if (prefs.getString("weather", null) != null) {
-        //     Intent intent = new Intent(this, WeatherActivity.class);
-        //     startActivity(intent);
-        //     finish();
-        // }
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        String prefs_county = prefs.getString("county", "{\"selected\":false," +
+                "\"location_id\":\"\"}");
+        try {
+            JSONObject county = new JSONObject(prefs_county);
+            if (county.getBoolean("selected")) {
+                Intent intent = new Intent(this, WeatherActivity.class);
+                startActivity(intent);
+                finish();
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 
 }

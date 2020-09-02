@@ -12,6 +12,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="end"
         android:textColor="#fff"
+        android:typeface="serif"
         android:textSize="60sp" />
     <!--天气状况-->
     <TextView
