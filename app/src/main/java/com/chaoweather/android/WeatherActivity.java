@@ -189,24 +189,26 @@ public class WeatherActivity extends AppCompatActivity {
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 //防止篡改所以弄个 final ？。获取请求结果。
-                String responseText = response.body().string();
+                final String responseText = response.body().string();
                 Log.d(TAG, "requestWeather onResponse: basic responseText is " + responseText);
-                JSONObject jsonObject;
-                try {
-                    jsonObject = new JSONObject(responseText);
-                    if (jsonObject.getString("code").equals("200")) {
-                        basicResponseText = responseText;
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            JSONObject jsonObject = new JSONObject(responseText);
+                            if (jsonObject.getString("code").equals("200")) {
+                                basicResponseText = responseText;
                                 showWeatherInfo();
-                                swipeRefresh.setRefreshing(false);
+                            } else {
+                                Toast.makeText(WeatherActivity.this, "获取实时数据失败！", Toast.LENGTH_LONG)
+                                        .show();
                             }
-                        });
+                            swipeRefresh.setRefreshing(false);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                     }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
+                });
             }
 
             @Override
@@ -215,7 +217,7 @@ public class WeatherActivity extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        Toast.makeText(WeatherActivity.this, "获取天气信息失败！", Toast.LENGTH_LONG).show();
+                        Toast.makeText(WeatherActivity.this, "获取实时数据失败！", Toast.LENGTH_LONG).show();
                         //14.6
                         swipeRefresh.setRefreshing(false);
                     }
@@ -235,25 +237,24 @@ public class WeatherActivity extends AppCompatActivity {
                 //防止篡改所以弄个 final ？。获取请求结果。
                 final String responseText = response.body().string();
                 Log.d(TAG, "requestWeather onResponse: AQI responseText is " + responseText);
-                JSONObject jsonObject;
-                try {
-                    jsonObject = new JSONObject(responseText);
-                    if (jsonObject.getString("code").equals("200")) {
-                        apqiResponseText = responseText;
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            JSONObject jsonObject = new JSONObject(responseText);
+                            if (jsonObject.getString("code").equals("200")) {
+                                apqiResponseText = responseText;
                                 showWeatherInfo();
+                            } else {
+                                Toast.makeText(WeatherActivity.this, "获取空气质量失败！", Toast.LENGTH_LONG)
+                                        .show();
                             }
-                        });
-                    } else {
-                        Toast.makeText(WeatherActivity.this, "获取空气质量失败！", Toast.LENGTH_LONG)
-                                .show();
+                            swipeRefresh.setRefreshing(false);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                     }
-                    swipeRefresh.setRefreshing(false);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
+                });
             }
 
             @Override
@@ -283,7 +284,8 @@ public class WeatherActivity extends AppCompatActivity {
                     IOException {
                 //防止篡改所以弄个 final ？。获取请求结果。
                 final String responseText = response.body().string();
-                Log.d(TAG, "requestWeather onResponse: indices responseText is " + responseText);
+                Log.d(TAG,
+                        "requestWeather onResponse: indices responseText is " + responseText);
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -291,15 +293,16 @@ public class WeatherActivity extends AppCompatActivity {
                             JSONObject jsonObject = new JSONObject(responseText);
                             if (jsonObject.getString("code").equals("200")) {
                                 indicesResponseText = responseText;
+                                showWeatherInfo();
                             } else {
-                                Toast.makeText(WeatherActivity.this, "获取生活指数失败！", Toast.LENGTH_LONG)
+                                Toast.makeText(WeatherActivity.this, "获取生活指数失败！",
+                                        Toast.LENGTH_LONG)
                                         .show();
                             }
                             swipeRefresh.setRefreshing(false);
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
-                        showWeatherInfo();
                     }
                 });
             }
@@ -310,7 +313,8 @@ public class WeatherActivity extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        Toast.makeText(WeatherActivity.this, "获取生活指数失败！", Toast.LENGTH_LONG)
+                        Toast.makeText(WeatherActivity.this, "获取生活指数失败！",
+                                Toast.LENGTH_LONG)
                                 .show();
                         //14.6
                         swipeRefresh.setRefreshing(false);
@@ -321,7 +325,8 @@ public class WeatherActivity extends AppCompatActivity {
 
         //攒出对应请求地址
         String dayForecast7Url =
-                "https://devapi.heweather.net/v7/weather/7d?location=" + weatherId + "&key" +
+                "https://devapi.heweather.net/v7/weather/7d?location=" + weatherId +
+                        "&key" +
                         "=c1d9dc6ffb8545f2884e7d36752ce8b7";
         //发送请求
         HttpUtil.sendOkHttpRequest(dayForecast7Url, new Callback() {
@@ -330,7 +335,8 @@ public class WeatherActivity extends AppCompatActivity {
                     IOException {
                 //防止篡改所以弄个 final ？。获取请求结果。
                 final String responseText = response.body().string();
-                Log.d(TAG, "requestWeather onResponse: indices responseText is " + responseText);
+                Log.d(TAG,
+                        "requestWeather onResponse: indices responseText is " + responseText);
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -338,15 +344,16 @@ public class WeatherActivity extends AppCompatActivity {
                             JSONObject jsonObject = new JSONObject(responseText);
                             if (jsonObject.getString("code").equals("200")) {
                                 dayForecast7Text = responseText;
+                                showWeatherInfo();
                             } else {
-                                Toast.makeText(WeatherActivity.this, "获取7天预报失败！", Toast.LENGTH_LONG)
+                                Toast.makeText(WeatherActivity.this, "获取7天预报失败！",
+                                        Toast.LENGTH_LONG)
                                         .show();
                             }
                             swipeRefresh.setRefreshing(false);
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
-                        showWeatherInfo();
                     }
                 });
             }
@@ -357,7 +364,8 @@ public class WeatherActivity extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        Toast.makeText(WeatherActivity.this, "获取7天预报失败！", Toast.LENGTH_LONG)
+                        Toast.makeText(WeatherActivity.this, "获取7天预报失败！",
+                                Toast.LENGTH_LONG)
                                 .show();
                         //14.6
                         swipeRefresh.setRefreshing(false);
@@ -401,16 +409,20 @@ public class WeatherActivity extends AppCompatActivity {
      */
     private void showWeatherInfo() {
         Log.d(TAG, "showWeatherInfo: ??");
+        //设置标题城市名称
+        titleCity.setText(titleText);
+
         String weatherJSON =
-                "{\"basic\":" + basicResponseText + ",\"aqi\":" + apqiResponseText + ",\"indices" +
+                "{\"basic\":" + basicResponseText + ",\"aqi\":" + apqiResponseText + "," +
+                        "\"indices" +
                         "\":" + indicesResponseText + ",\"forecast" +
                         "\":" + dayForecast7Text + "}";
         Weather weather = Utility.handleWeatherResponse(weatherJSON);
 
-        Log.d(TAG, "showWeatherInfo: weather.code is " + weather.code);
         if (weather != null && "200".equals(weather.code)) {
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-            Log.d(TAG, "showWeatherInfo: weather.basic.getCode() is " + weather.basic.getCode());
+            Log.d(TAG,
+                    "showWeatherInfo: weather.basic.getCode() is " + weather.basic.getCode());
             if (!weather.basic.getCode().equals("000")) {
                 //2013-12-30 T 01:45 + 08:00
                 String updateTime = weather.basic.getUpdateTime().split("\\+")[1];
@@ -418,8 +430,6 @@ public class WeatherActivity extends AppCompatActivity {
                 String degree = weather.basic.getNow().getTemp() + "℃";
                 //获取 weather 实例中 now 的 more 的 info
                 String weatherInfo = weather.basic.getNow().getText();
-                //设置标题城市名称
-                titleCity.setText(titleText);
                 //设置标题天气更新时间
                 titleUpdateTime.setText(updateTime);
                 //设置温度
@@ -433,7 +443,7 @@ public class WeatherActivity extends AppCompatActivity {
                 forecastLayout.removeAllViews();
                 //遍历 weather 中的 forecastList 集合
                 for (Forecast.DailyBean forecast : weather.forecast.daily) {
-                    //引用 R.layout.forecast_item 子布局创建布局 view 对象
+                    //根据 R.layout.forecast_item 子布局创建 view 布局对象
                     View view = LayoutInflater.from(this).inflate(R.layout.forecast_item,
                             forecastLayout,
                             false);

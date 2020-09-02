@@ -13,6 +13,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Utility {
 
     private static final String TAG = "aa";
@@ -44,92 +47,89 @@ public class Utility {
      *                 *                   "name":"青海"},{"id":34,"name":"新疆"}]
      * @return
      */
-    // public static boolean handleProvinceResponse(String response) {
-    //     // Log.d(TAG, "handleProvinceResponse: response: " + response);
-    //     if (!TextUtils.isEmpty(response)) {
-    //         try {
-    //             //组成 json 数组
-    //             JSONArray allProvinces = new JSONArray(response);
-    //             for (int i = 0; i < allProvinces.length(); i++) {
-    //                 //获取数组中对应 json 对象
-    //                 JSONObject provinceObject = allProvinces.getJSONObject(i);
-    //                 //实例省数据库对象
-    //                 Province province = new Province();
-    //                 province.setLocationName(provinceObject.getString("name"));
-    //                 // province.setProvinceCode(provinceObject.getInt("id"));
-    //                 //保存数据库
-    //                 province.save();
-    //             }
-    //             return true;
-    //         } catch (JSONException e) {
-    //             e.printStackTrace();
-    //         }
-    //     }
-    //     return false;
-    // }
-    //
-    // /**
-    //  * 解析和处理服务器返回的市数据
-    //  *
-    //  * @param response   服务器返回的市数据。格式：[{"id":113,"name":"南京"},{"id":114,"name":"无锡"},{"id":115,
-    //  *                   "name":"镇江"},{"id":116,"name":"苏州"},{"id":117,"name":"南通"},{"id":118,
-    //  *                   "name":"扬州"},{"id":119,"name":"盐城"},{"id":120,"name":"徐州"},{"id":121,
-    //  *                   "name":"淮安"},{"id":122,"name":"连云港"},{"id":123,"name":"常州"},{"id":124,
-    //  *                   "name":"泰州"},{"id":125,"name":"宿迁"}]
-    //  * @param provinceId 当前市所属省的 id
-    //  * @return
-    //  */
-    // public static boolean handleCityResponse(String response, int provinceId) {
-    //     if (!TextUtils.isEmpty(response)) {
-    //         try {
-    //             JSONArray allCities = new JSONArray(response);
-    //             for (int i = 0; i < allCities.length(); i++) {
-    //                 JSONObject cityObject = allCities.getJSONObject(i);
-    //                 City city = new City();
-    //                 city.setLocationName(cityObject.getString("name"));
-    //                 city.setLocationId(cityObject.getInt("id"));
-    //                 city.setProvinceAdm1En(provinceId);
-    //                 city.save();
-    //             }
-    //             return true;
-    //         } catch (JSONException e) {
-    //             e.printStackTrace();
-    //         }
-    //     }
-    //     return false;
-    // }
-    //
-    // /**
-    //  * 解析和处理服务器返回的县数据
-    //  *
-    //  * @param response 服务器返回的县数据。格式：[{"id":932,"name":"镇江","weather_id":"CN101190301"},{"id
-    //  *                 ":933,"name":"丹阳","weather_id":"CN101190302"},{"id":934,"name":"扬中",
-    //  *                 "weather_id":"CN101190303"},{"id":935,"name":"句容",
-    //  *                 "weather_id":"CN101190304"},{"id":936,"name":"丹徒",
-    //  *                 "weather_id":"CN101190305"}]
-    //  * @param cityId   当前市所属市的 id
-    //  * @return
-    //  */
-    // public static boolean handleCountyResponse(String response, int cityId) {
-    //     if (!TextUtils.isEmpty(response)) {
-    //         Log.d(TAG, "handleCountyResponse: response: " + response);
-    //         try {
-    //             JSONArray allCounties = new JSONArray(response);
-    //             for (int i = 0; i < allCounties.length(); i++) {
-    //                 JSONObject countyObject = allCounties.getJSONObject(i);
-    //                 County county = new County();
-    //                 county.setCountyName(countyObject.getString("name"));
-    //                 county.setWeatherId(countyObject.getString("weather_id"));
-    //                 county.setCityId(cityId);
-    //                 county.save();
-    //             }
-    //             return true;
-    //         } catch (JSONException e) {
-    //             e.printStackTrace();
-    //         }
-    //     }
-    //     return false;
-    // }
+    public static boolean handleProvinceResponse(List<String[]> response) {
+        // Log.d(TAG, "handleProvinceResponse: response: " + response);
+        if (response.size() > 0) {
+            for (int i = 0; i < response.size(); i++) {
+                Log.d(TAG, "handleProvinceResponse: 省：" + response.get(i)[7]);
+                Province province = new Province();
+                province.setLocationName(response.get(i)[7]);
+                province.setAdm1En(response.get(i)[6]);
+                province.setAdm1(response.get(i)[7]);
+                province.setAdm2En(response.get(i)[8]);
+                province.setAdm2(response.get(i)[9]);
+                province.save();
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 解析和处理服务器返回的市数据
+     *
+     * @param response 服务器返回的市数据。格式：[{"id":113,"name":"南京"},{"id":114,"name":"无锡"},{"id":115,
+     *                 "name":"镇江"},{"id":116,"name":"苏州"},{"id":117,"name":"南通"},{"id":118,
+     *                 "name":"扬州"},{"id":119,"name":"盐城"},{"id":120,"name":"徐州"},{"id":121,
+     *                 "name":"淮安"},{"id":122,"name":"连云港"},{"id":123,"name":"常州"},{"id":124,
+     *                 "name":"泰州"},{"id":125,"name":"宿迁"}]
+     * @return
+     */
+    public static boolean handleCityResponse(List<String[]> response) {
+        if (response.size() > 0) {
+            for (int i = 0; i < response.size(); i++) {
+                Log.d(TAG, "handleCityResponse: 市：" + response.get(i)[2]);
+                City city = new City();
+                city.setLocationId(response.get(i)[0]);
+                city.setLocationNameEn(response.get(i)[1]);
+                city.setLocationName(response.get(i)[2]);
+                city.setAdm1En(response.get(i)[6]);
+                city.setProvinceAdm1En(response.get(i)[6]);
+                city.setAdm1(response.get(i)[7]);
+                city.setAdm2En(response.get(i)[8]);
+                city.setAdm2(response.get(i)[9]);
+                city.setLatitude(response.get(i)[10]);
+                city.setLongitude(response.get(i)[11]);
+                city.setAdCode(response.get(i)[12]);
+                city.save();
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 解析和处理服务器返回的县数据
+     *
+     * @param response 服务器返回的县数据。格式：[{"id":932,"name":"镇江","weather_id":"CN101190301"},{"id
+     *                 ":933,"name":"丹阳","weather_id":"CN101190302"},{"id":934,"name":"扬中",
+     *                 "weather_id":"CN101190303"},{"id":935,"name":"句容",
+     *                 "weather_id":"CN101190304"},{"id":936,"name":"丹徒",
+     *                 "weather_id":"CN101190305"}]
+     * @return
+     */
+    public static boolean handleCountyResponse(List<String[]> response) {
+        if (response.size() > 0) {
+            for (int i = 0; i < response.size(); i++) {
+                Log.d(TAG, "handleCityResponse: 县/区：" + response.get(i)[2]);
+                County county = new County();
+                county.setLocationId(response.get(i)[0]);
+                county.setLocationNameEn(response.get(i)[1]);
+                county.setLocationName(response.get(i)[2]);
+                county.setAdm1En(response.get(i)[6]);
+                county.setCityAdm1En(response.get(i)[8]);
+                county.setAdm1(response.get(i)[7]);
+                county.setAdm2En(response.get(i)[8]);
+                county.setAdm2(response.get(i)[9]);
+                county.setLatitude(response.get(i)[10]);
+                county.setLongitude(response.get(i)[11]);
+                county.setAdCode(response.get(i)[12]);
+                county.save();
+            }
+            return true;
+        }
+        return false;
+    }
 
     /**
      * 把服务器获取的JSON数据

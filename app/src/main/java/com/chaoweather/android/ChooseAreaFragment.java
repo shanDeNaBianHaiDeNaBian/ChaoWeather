@@ -2,6 +2,7 @@ package com.chaoweather.android;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.res.AssetManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -27,7 +28,10 @@ import com.chaoweather.android.util.Utility;
 import org.jetbrains.annotations.NotNull;
 import org.litepal.LitePal;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -129,10 +133,11 @@ public class ChooseAreaFragment extends Fragment {
                 } else if (currentLevel == LEVEL_COUNTY) {
                     County county = countyList.get(position);
                     String weatherId = county.getLocationId();
+                    String title = county.getLocationName();
                     if (getActivity() instanceof MainActivity) {
                         Intent intent = new Intent(getActivity(), WeatherActivity.class);
                         intent.putExtra("weather_id", weatherId);
-                        intent.putExtra("title", county.getLocationName());
+                        intent.putExtra("title", title);
                         startActivity(intent);
                         getActivity().finish();
                     } else if (getActivity() instanceof WeatherActivity) {
@@ -140,6 +145,7 @@ public class ChooseAreaFragment extends Fragment {
                         weatherActivity.drawerLayout.closeDrawers();
                         weatherActivity.swipeRefresh.setRefreshing(true);
                         weatherActivity.requestWeather(weatherId);
+                        weatherActivity.titleText = title;
                     }
                 }
             }
@@ -193,6 +199,9 @@ public class ChooseAreaFragment extends Fragment {
             //设置当前 选中级别 为 省级
             currentLevel = LEVEL_PROVINCE;
             closeProgressDialog();
+        } else {
+            //如果数据库中没数据，就从 src/main/assets/China-City-List-latest.csv 中查询
+            queryFromCSV("province");
         }
     }
 
@@ -204,9 +213,9 @@ public class ChooseAreaFragment extends Fragment {
         titleText.setText(selectedProvince.getLocationName());
         //因为市级是第二级所以要显示返回按钮
         backButton.setVisibility(View.VISIBLE);
-        //查询当前省对应的市数据（不能查询全部市，所以用 where 查询，条件是查询数据库中市表里 privinceid 字段等于当前选中省的 id）
+        //查询当前省对应的市数据（不能查询全部市，所以用 where 查询，条件是 市 的 一级行政区划 等于选中 省 的 一级行政区划）
         cityList =
-                LitePal.where("provinceAdm1En = ?", selectedProvince.getAdm1En()).find(City.class);
+                LitePal.where("adm1En = ?", selectedProvince.getAdm1En()).find(City.class);
         //如果有数据
         if (cityList.size() > 0) {
             //清除 数据集合 防止重复
@@ -222,21 +231,16 @@ public class ChooseAreaFragment extends Fragment {
             listView.setSelection(0);
             //设置当前 选中级别 为 省级
             currentLevel = LEVEL_CITY;
+        } else {
+            //如果数据库中没数据，就从 src/main/assets/China-City-List-latest.csv 中查询
+            queryFromCSV("city");
         }
-        // else {
-        //     //如果数据库中没有 市 数据
-        //     //获取当前选中省的代号，用于从服务器接口查询
-        //     int provinceCode = selectedProvince.getProvinceCode();
-        //     //组装地址
-        //     String address = "http://guolin.tech/api/china/" + provinceCode;
-        //     //走从服务器查询方法
-        //     queryFromServer(address, "city");
-        // }
     }
 
     private void queryCounties() {
         titleText.setText(selectedCity.getLocationName());
         backButton.setVisibility(View.VISIBLE);
+        //查询当前省对应的市数据（不能查询全部市，所以用 where 查询，条件是 市 的 二级行政区划 等于选中 市 的 二级行政区划）
         countyList =
                 LitePal.where("adm2En = ?", selectedCity.getAdm2En()).find(County.class);
         if (countyList.size() > 0) {
@@ -247,80 +251,123 @@ public class ChooseAreaFragment extends Fragment {
             adapter.notifyDataSetChanged();
             listView.setSelection(0);
             currentLevel = LEVEL_COUNTY;
+        } else {
+            //如果数据库中没数据，就从 src/main/assets/China-City-List-latest.csv 中查询
+            queryFromCSV("county");
         }
-        // else {
-        //     int provinceCode = selectedProvince.getProvinceCode();
-        //     int cityCode = selectedCity.getCityCode();
-        //     String address = "http://guolin.tech/api/china/" + provinceCode + "/" + cityCode;
-        //     //走从服务器查询方法
-        //     queryFromServer(address, "county");
-        // }
     }
 
-    // /**
-    //  * 从服务器查询地区数据
-    //  *
-    //  * @param address 接口地址 http://guolin.tech/api/china http://guolin.tech/api/china/16
-    //  *                http://guolin.tech/api/china/16/115
-    //  * @param type    类别 province city county
-    //  */
-    // private void queryFromServer(String address, final String type) {
-    //     //因为是子线程查询（耗时操作）所以显示一下等待对话框
-    //     showProgressDialog();
-    //     //发送请求
-    //     HttpUtil.sendOkHttpRequest(address, new Callback() {
-    //         //当前成功响应结果
-    //         @Override
-    //         public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-    //             //获取响应数据
-    //             String responseText = response.body().string();
-    //             Log.d(TAG, "onResponse: responseText: " + responseText);
-    //             //声明数据库保存结果
-    //             boolean result = false;
-    //             //如果请求类型是 省
-    //             if ("province".equals(type)) {
-    //                 //把省数据保存到数据库中并返回是否成功（下面以此类推）
-    //                 result = Utility.handleProvinceResponse(responseText);
-    //             } else if ("city".equals(type)) {
-    //                 result = Utility.handleCityResponse(responseText, selectedProvince.getId());
-    //             } else if ("county".equals(type)) {
-    //                 result = Utility.handleCountyResponse(responseText, selectedCity.getId());
-    //             }
-    //             //如果保存成功
-    //             if (result) {
-    //                 //执行在子线程中修改 UI 界面
-    //                 getActivity().runOnUiThread(new Runnable() {
-    //                     @Override
-    //                     public void run() {
-    //                         //关闭 progress
-    //                         closeProgressDialog();
-    //                         //如果类型为 省 从数据库查询 省 并更新界面（下面以此类推）
-    //                         if ("province".equals(type)) {
-    //                             queryProvinces();
-    //                         } else if ("city".equals(type)) {
-    //                             queryCities();
-    //                         } else if ("county".equals(type)) {
-    //                             queryCounties();
-    //                         }
-    //                     }
-    //                 });
-    //             }
-    //         }
-    //
-    //         //如果请求失败
-    //         @Override
-    //         public void onFailure(@NotNull Call call, @NotNull IOException e) {
-    //             getActivity().runOnUiThread(new Runnable() {
-    //                 @Override
-    //                 public void run() {
-    //                     //关闭 progress 并给出错误提示
-    //                     closeProgressDialog();
-    //                     Toast.makeText(getContext(), "加载失败！", Toast.LENGTH_LONG).show();
-    //                 }
-    //             });
-    //         }
-    //     });
-    // }
+    /**
+     * 从 src/main/assets/China-City-List-latest.csv 中查询
+     *
+     * @param type 类别 province city county
+     */
+    private void queryFromCSV(final String type) {
+        //因为是子线程查询（耗时操作）所以显示一下等待对话框
+        showProgressDialog();
+        try {
+            InputStream chinaCitys = getActivity().getAssets().open("China-City-List-latest.csv");
+            // Log.d(TAG, "onCreate: chinaCitys " + chinaCitys.toString());
+            InputStreamReader is = new InputStreamReader(chinaCitys);
+            BufferedReader reader = new BufferedReader(is);
+            String line;
+            //获取 省 数据
+            List<String[]> provincesData = new ArrayList();
+            //获取对应省下的 市 数据
+            List<String[]> citiesData = new ArrayList();
+            //获取 县/区 数据
+            List<String[]> countiesData = new ArrayList();
+            while ((line = reader.readLine()) != null) {
+                String[] arr_thisLine;
+                //处理 AD_code 带 "110,100,110,000,100,000" 这种格式的处理
+                if (line.indexOf(",\"") > -1) {
+                    String[] before = line.substring(0, line.indexOf(",\"")).split(
+                            "\\,");
+                    String lastStr = line.substring(line.indexOf(",\""));
+                    String lastAd = lastStr.substring(lastStr.indexOf(",\"") + 2,
+                            lastStr.length() - 1);
+                    arr_thisLine = new String[before.length + 1];
+                    System.arraycopy(before, 0, arr_thisLine, 0, before.length);
+                    arr_thisLine[before.length] = lastAd;
+                } else {
+                    arr_thisLine = line.split("\\,");
+                }
+
+                //直辖市/省 代码特征，Location_ID 后 4 位，直辖市：0100，省：0101
+                String municipalityProvinceCode =
+                        arr_thisLine[0].substring(arr_thisLine[0].length() - 4,
+                                arr_thisLine[0].length());
+                //市 代码特征，Location_ID 后 2 位，01 如：101051101 鸡西市
+                String cityCode =
+                        arr_thisLine[0].substring(arr_thisLine[0].length() - 2,
+                                arr_thisLine[0].length());
+                // Log.d(TAG, "onCreate: " + municipalityProvinceCode);
+
+                //如果请求类型是 省
+                if ("province".equals(type)) {
+                    // Log.d(TAG, "onCreate: " + municipalityProvinceCode);
+                    if (municipalityProvinceCode.equals("0100") || municipalityProvinceCode.equals(
+                            "0101")) {
+                        // Log.d(TAG, "onCreate: 省：" + arr_thisLine[7]);
+                        provincesData.add(arr_thisLine);
+                    }
+                } else if ("city".equals(type)) {
+                    if (municipalityProvinceCode.equals("0100") || municipalityProvinceCode.equals(
+                            "0101") || cityCode.equals("01")) {
+                        //如果当前市的 adm2En 等于选中省的 adm2En，就是当前
+                        if (arr_thisLine[6].equals(selectedProvince.getAdm1En())) {
+                            citiesData.add(arr_thisLine);
+                        }
+                    }
+                } else if ("county".equals(type)) {
+                    //攒出 县/区 数据 Location_ID 代码特性 后台 4 位 或后 2位 不是 0100、0101、01
+                    if (!municipalityProvinceCode.equals("0100") && !municipalityProvinceCode.equals(
+                            "0101") && !cityCode.equals("01")) {
+                        // Log.d(TAG, "onCreate: 县/区：" + arr_thisLine[2]);
+                        if (arr_thisLine[8].equals(selectedCity.getAdm2En())) {
+                            countiesData.add(arr_thisLine);
+                        }
+                    }
+                }
+            }
+
+            //声明数据库保存结果
+            boolean result = false;
+            //如果请求类型是 省
+            if ("province".equals(type)) {
+                result = Utility.handleProvinceResponse(provincesData);
+            } else if ("city".equals(type)) {
+                Log.d(TAG, "queryFromCSV: citiesData.size() " + citiesData.size());
+                result = Utility.handleCityResponse(citiesData);
+            } else if ("county".equals(type)) {
+                result = Utility.handleCountyResponse(countiesData);
+            }
+
+            //如果保存成功
+            if (result) {
+                //执行在子线程中修改 UI 界面
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        //关闭 progress
+                        closeProgressDialog();
+                        //如果类型为 省 从数据库查询 省 并更新界面（下面以此类推）
+                        if ("province".equals(type)) {
+                            queryProvinces();
+                        } else if ("city".equals(type)) {
+                            queryCities();
+                        } else if ("county".equals(type)) {
+                            queryCounties();
+                        }
+                    }
+                });
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            Log.d(TAG, "onCreate: 2.5 " + e.toString());
+            Toast.makeText(getContext(), "错误：文件不存在或打开失败！", Toast.LENGTH_LONG).show();
+        }
+    }
 
     //显示 progress 对话框
     private void showProgressDialog() {
