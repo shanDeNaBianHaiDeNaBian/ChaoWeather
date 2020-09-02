@@ -1,0 +1,9 @@
+<litepal>
+    <dbname value="chaochao_weather" />
+    <version value="1" />
+    <list>
+        <mapping class="com.chaoweather.android.db.Province" />
+        <mapping class="com.chaoweather.android.db.City" />
+        <mapping class="com.chaoweather.android.db.County" />
+    </list>
+</litepal>
