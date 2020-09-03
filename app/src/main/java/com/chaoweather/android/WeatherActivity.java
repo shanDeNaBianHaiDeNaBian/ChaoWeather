@@ -196,12 +196,12 @@ public class WeatherActivity extends AppCompatActivity {
         }
 
         //14.5.4
-        String bingPic = prefs.getString("bing_pic", null);
-        if (bingPic != null) {
-            Glide.with(this).load(bingPic).into(bingPicImg);
-        } else {
+        // String bingPic = prefs.getString("bing_pic", null);
+        // if (bingPic != null) {
+        //     Glide.with(this).load(bingPic).into(bingPicImg);
+        // } else {
             loadBingPic();
-        }
+        // }
 
         //14.6.2
         navButton.setOnClickListener(new View.OnClickListener() {
@@ -258,9 +258,9 @@ public class WeatherActivity extends AppCompatActivity {
         }
     }
 
-    public class MyLocationListener extends BDAbstractLocationListener{
+    public class MyLocationListener extends BDAbstractLocationListener {
         @Override
-        public void onReceiveLocation(BDLocation location){
+        public void onReceiveLocation(BDLocation location) {
             //此处的BDLocation为定位结果信息类，通过它的各种get方法可获取定位相关的全部结果
             //以下只列举部分获取位置描述信息相关的结果
             //更多结果信息获取说明，请参照类参考中BDLocation类中的说明
@@ -494,28 +494,39 @@ public class WeatherActivity extends AppCompatActivity {
 
     //14.5.4
     private void loadBingPic() {
-        String requestBingPic = "http://guolin.tech/api/bing_pic";
-        HttpUtil.sendOkHttpRequest(requestBingPic, new Callback() {
-            @Override
-            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                final String bingPic = response.body().string();
-                SharedPreferences.Editor editor =
-                        PreferenceManager.getDefaultSharedPreferences(WeatherActivity.this).edit();
-                editor.putString("bing_pic", bingPic);
-                editor.apply();
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Glide.with(WeatherActivity.this).load(bingPic).into(bingPicImg);
-                    }
-                });
-            }
-
-            @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                e.printStackTrace();
-            }
-        });
+        String requestBingPic = "https://cn.bing.com/th?id=OHR.FinancialTowers_ZH-CN6494148642_1920x1080.jpg";
+        Glide.with(WeatherActivity.this).load(requestBingPic).into(bingPicImg);
+        // HttpUtil.sendOkHttpRequest(requestBingPic, new Callback() {
+        //     @Override
+        //     public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+        //         final String bingPic = response.body().string();
+        //         SharedPreferences.Editor editor =
+        //                 PreferenceManager.getDefaultSharedPreferences(WeatherActivity.this).edit();
+        //         editor.putString("bing_pic", bingPic);
+        //         editor.apply();
+        //         // Log.d(TAG, "onResponse: bingPic: " + bingPic);
+        //         runOnUiThread(new Runnable() {
+        //             @Override
+        //             public void run() {
+        //                 Toast.makeText(WeatherActivity.this, bingPic, Toast.LENGTH_LONG).show();
+        //                 Glide.with(WeatherActivity.this).load(bingPic).into(bingPicImg);
+        //             }
+        //         });
+        //     }
+        //
+        //     @Override
+        //     public void onFailure(@NotNull Call call, @NotNull IOException e) {
+        //         final String err = e.toString();
+        //         runOnUiThread(new Runnable() {
+        //             @Override
+        //             public void run() {
+        //                 Log.d(TAG, "onFailure: bingPic: " + err);
+        //                 Toast.makeText(WeatherActivity.this, err, Toast.LENGTH_LONG).show();
+        //             }
+        //         });
+        //         e.printStackTrace();
+        //     }
+        // });
     }
 
     /**
